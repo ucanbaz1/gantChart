@@ -225,9 +225,6 @@ def Gantt_plotter(textname,newDir):
     fig.update_yaxes(autorange='reversed', title='Tasks')
     fig.update_xaxes(title='Time')
    
-    
-    for i in vlineCount:
-        print("ufuk",i)
    
 
     fig.update_layout(
