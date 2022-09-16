@@ -76,6 +76,7 @@ def clockChecker(file):
         taskLineNumber=0
         targetLineNumber = 0
         listofLineNumbers=[]
+        
 
         for line in lines:
             if is_date(str(line.split(" ")[0])):
