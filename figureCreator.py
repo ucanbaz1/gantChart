@@ -161,6 +161,7 @@ def createFigure(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,all
     return fig
 
 
+
     #
 def figures_to_html(figs, header, note, filename):
     dashboard = open(filename, 'w')
