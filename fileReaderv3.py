@@ -3,6 +3,11 @@ File Reader V3
 Created by Ersin YAYLA
 V3: Updated the time jump catching and time updating metods
 """
+"""
+To Do  List:
+- Configure files all logs will be updated due to time gap found in commisioning logs
+- If there is no time gap, skip the updating 
+"""
 
 
 import plotly.express as px
