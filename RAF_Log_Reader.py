@@ -238,9 +238,10 @@ def Gantt_plotter(textname,newDir):
             dict(
             buttons=list([
                 dict(
-                    args=[{"visible":['legendonly']},
+                    args=[{"visible":[True]},
                         {'shapes[{}].visible'.format(i):True for i in range(colorCount)},
-                         {'shapes[{}].visible'.format(i): False for i in vlineCount}],
+                        # {'shapes[{}].visible'.format(i): False for i in vlineCount}
+                         ],
                     label="VLine",
                     method="update"
                 ),
