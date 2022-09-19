@@ -14,15 +14,11 @@ __version__ = 0.4 updates :
 from cgi import print_form
 from fileinput import filename
 from pydoc import visiblename
-from tkinter.tix import TList
 from turtle import color, fillcolor
-import plotly.express as px
-import plotly.graph_objects as go
-import pandas as pd
 from datetime import datetime,timedelta
-import numpy as np
 import os
 import re
+from figureCreator import createFigure, figCreate
 
 fileCount=0
 allFirstStartTime=[]
@@ -175,162 +171,12 @@ def Gantt_plotter(textname,newDir):
                 durationList.append(durationGroup)
                 taskAndDuration.append(mission+taskNameLine.group(0)+taskDuration.group(0))
                 taskData.append(mission+taskNameLine.group(0))
-               
-              
-                    
 
     file.close()
-
+   
+    figCreate(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,newDir,taskData,filePath,durationList,duration_Threshold)
     #Creating CSV file format by used data from the log file.
-    data = {'Task': taskData, 'Start': start, 'Finish': endTime, 'Duration':durationList}
-    if (os.path.exists(filePath) and os.path.isfile(filePath)):
-        os.remove(filePath)
-    df = pd.DataFrame(data)
-    df.to_csv(filePath)
-
-    colorList = ["yellow","red","blue","orange","green","gold","skyblue","gray","pink","indigo","blueviolet","burlywood", "purple","aqua","aquamarine",
-            "seagreen","sienna","plum","royalblue","salmon","silver","lightgoldenrodyellow","darkslategray","darkolivegreen",
-			"cadetblue","coral","cornflowerblue","crimson","cyan","turquoise","lightslategrey","cornsilk","firebrick",
-			"darkcyan","grey","peru","darkorange","rebeccapurple","moccasin","dodgerblue","lightsalmon",
-            "darkgoldenrod","darkgrey","darkgreen","darkmagenta","tomato",
-           "darkred","deepskyblue","forestgreen","fuchsia","slategrey","lavender",
-            "lavenderblush","lawngreen","seashell","palegoldenrod","rosybrown",
-           "lightseagreen","lime","magenta","maroon","mediumvioletred","olive",
-            ]
-
-    #Create gantt chart figure.
-    fig=px.timeline(x_start=start,x_end=endTime,y=taskAndDuration,color=taskFilterNamesList,color_discrete_sequence=colorList)
-    
-    taskCount=0
-    colorCount=0
-    vlineCount= []
-    
-
-    
-    while taskCount < len(fileNames): 
-        if fileNames[taskCount] in  taskFilterNamesList:
-            fig.add_trace(go.Scatter(x=[allFirstStartTime[taskCount]],  y=['Starts'],
-                            mode='lines+markers',
-                            line=dict(color=colorList[colorCount]),
-                            marker=dict(color=colorList[colorCount]),
-                            name=fileNames[taskCount]))
-            if fileNames[taskCount] == 'em1s1_vnfr-mini-playbook.log' or fileNames[taskCount] == 'em1s2_vnfr-mini-playbook.log':
-                vlineCount.append(colorCount)
-            fig.add_vline(x=allFirstStartTime[taskCount],  line_width=2,line_color=colorList[colorCount],y0=0,visible=True)
-            colorCount +=1
-        taskCount += 1
-        
-
-
-    fig.update_yaxes(autorange='reversed', title='Tasks')
-    fig.update_xaxes(title='Time')
    
-   
-
-    fig.update_layout(
-        
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=False),
-        
-        #C:\Users\ucanbaz\Desktop\Logs\UpdatedTimeLogs
-        #disable and ebable buttons for filter tasks
-        updatemenus=[
-            dict(
-            buttons=list([
-                dict(
-                    args=[{"visible":[True]},
-                        {'shapes[{}].visible'.format(i):True for i in range(colorCount)},
-                        # {'shapes[{}].visible'.format(i): False for i in vlineCount}
-                         ],
-                    label="VLine",
-                    method="update"
-                ),
-                dict(
-                    args=[{"visible":[True]},
-                        {'shapes[{}].visible'.format(i): False for i in range(colorCount)}],
-                    label="NonVLine",
-                    method="update"
-                ),
-                dict(
-                    args=[{"visible":[True]},
-                        {'shapes[{}].visible'.format(i): False for i in vlineCount}],
-                    label="NonFarVline",
-                    method="update"
-                )
-           
-            ]),
-            
-            type="dropdown",
-                direction="down",
-                active=0,
-                x=0.95,
-                y=1,
-        ),
-
-            dict(
-                type="dropdown",
-                direction="down",
-                active=0,
-                x=1,
-                y=1,
-               buttons=list([
-                    dict(label="All",
-                         method="update",
-                         args=[{"visible":[True]},
-                        {'shapes[{}].visible'.format(i):True for i in range(colorCount)}
-                         
-                         ]),
-                    dict(label="None",
-                         method="update",
-                         args=[{"visible":['legendonly']},
-                         {'shapes[{}].visible'.format(i): False for i in range(colorCount)}
-
-                           ],
-                         ), 
-                         
-                ]),
-                
-            )
-        ],
-        
-        title_font_size=14,
-        font_size=8,
-        title_font_family='Arial'
-    )
-    #fig.layout.xaxis.rangeslider.visible = False  
-   
-    # Creating a table in dash with CSV file
-    df = pd.read_csv(newDir+r'\CSV.csv', index_col=0)
-    df.sort_values(df.columns[3], 
-                    axis=0,
-                    inplace=True)
-    
-    fig2 = go.Figure(data=[go.Table(
-        header=dict(values=list(df.columns),
-                    fill_color='paleturquoise',
-                    align='left'),
-        cells=dict(values=[df.Task, df.Start, df.Finish, df.Duration],
-                   fill_color='lavender',
-                   align='left'))
-    ])
-    
-   
-
-    #
-    def figures_to_html(figs, header, note, filename=newDir+r"\GanttChart_Task_Overview.html"):
-        dashboard = open(filename, 'w')
-        
-        dashboard.write("<html><head></head><body>" + "\n")
-        dashboard.write("<h1 style=\"text-align:center;font-size:40;\">"+header+"</h1>"+"\n")
-        dashboard.write("<p style=\"color:red\"><strong>" + note + "</strong></p>" + "\n")
-        #dashboard.write("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>.vl {border-left: 4px solid green;height: 75px;position: absolute;left: 13%;margin-left: -3px;top: 100;}</style></head><body><h2>"+mgStart+"</h2><div class=\"vl\"></div>")
-        #dashboard.write("<br><p><strong>" + mgTime + "</strong></p>")
-        for fig in figs:
-            inner_html = fig.to_html().split('<body>')[1].split('</body>')[0]
-            dashboard.write(inner_html)
-        dashboard.write("</body></html>" + "\n")
-    #Get parameters for create hmtl page of gantt chart
-    figures_to_html([fig,fig2],"Task Overview","NOTE: This gantt chart shows tasks running over " +str(duration_Threshold)+" seconds!")
 
 
 
