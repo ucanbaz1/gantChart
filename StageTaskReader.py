@@ -2,6 +2,7 @@
 Stage Task Reader
 Created by Ersin YAYLA
 Reads a csv file and update/create a stage config file accordingly 
+Added an upgrade stage
 """
 from contextlib import nullcontext
 import ctypes
@@ -40,11 +41,13 @@ def nameBasedLogTaskReader(filename,Taskname,logname):
 
             for line in lines:
                 if Taskname in line:
-                    if "stackAPI" in logname:
+                    if "stack" in logname:
                         line = line.split('] ')[1]
                     else:
                         line=line.split('] ')[0]
                     ServerNEName = line.split(" ")[-1]
+                    if "\n" in ServerNEName:
+                        ServerNEName=ServerNEName.strip("\n")
                     print(ServerNEName)
                     serverNEList.append(ServerNEName)
 
@@ -102,6 +105,17 @@ def ConfigReader(filename,logPath):
                         VMEndTask = endTask.replace(prevServerName, i.split(r"/")[-1].strip("config-"))
                         print(VMStageName)
                         newConfigFileWriter(VMStageName, logFileName, VMStartTask, VMEndTask)
+
+                elif "VM Upgrade" in stageName and not stageName.startswith("All"):
+                    serverNeList=nameBasedLogTaskReader(logFileName, startTask,logFileName)
+                    for i in serverNeList:
+                        prevServerName = "<ServerName>"
+                        VMStageName = stageName + " " + i
+                        VMStartTask = startTask.replace(prevServerName, i)
+                        VMEndTask = endTask.replace(prevServerName,i)
+                        print(VMStageName)
+                        newConfigFileWriter(VMStageName,logFileName,VMStartTask,VMEndTask,logPath)
+
                 elif stageName=="Commisioning and Configure logs":
                     fileNameList=logList(logPath)
                     for f in fileNameList:
