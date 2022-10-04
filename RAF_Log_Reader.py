@@ -11,31 +11,30 @@ __version__ = 0.4 updates :
     - GanttChart html and CSV.csv  will be created under GanttFiles in UpdatedTimeLogs directory 
 """
 
-from cgi import print_form
-from fileinput import filename
-from pydoc import visiblename
-from turtle import color, fillcolor
+
 from datetime import datetime,timedelta
 import os
 import re
-from figureCreator import createFigure, figCreate
+from ReadLogGeneral import GeneralLog
+import shutil
 
-fileCount=0
+
 allFirstStartTime=[]
-path=input("Please add the log directory path: ")
-duration_Threshold=float(input("Please define a threshold in seconds which this script will take only more than it > "))
 fileNames=[]
+
 def logList(path):
     with os.scandir(path) as entries:
         for f in entries:
             if f.is_file():
-                print(f.name)
+                # print(f.name)
                 fileNames.append(f.name)
-    print(fileNames)
+    # print(fileNames)
     return fileNames
 
 # Create
 def makeDirectory(path):
+    if os.path.exists(path + "\GanntFiles"):
+        shutil.rmtree(path + "\GanntFiles")
     newPath = path + r"\GanntFiles"
     try:
         os.mkdir(newPath)
@@ -48,9 +47,9 @@ def readFirstTime(fileF):
         content = file.read()
         first_line = content.split('\n', 1)[0]
         allFirstStartTime.append(first_line[0:23])
-    print(fileF)
+    # print(fileF)
        
-def taskCollector(file,NetEName,newFile,fileCount):
+def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
     T_List=[]
     PT_List=["","","","","","","",""]
     dateAdjusted=[]
@@ -60,8 +59,12 @@ def taskCollector(file,NetEName,newFile,fileCount):
         line_no=0
         dateFormat = '^20[0-9]+\-[01][0-9]\-[0-3][0-9]'
         
+        
+        
+                       
         for line in lines:
             startsWithDateCheck = re.search(dateFormat, line)
+
             if  startsWithDateCheck and "TASK" in line:
                 """print(PT_List)"""
                 line=line.replace("*","").strip(" \n")
@@ -82,12 +85,12 @@ def taskCollector(file,NetEName,newFile,fileCount):
 
                        
                         start_time= PT_List[0].split('.')[0]+" "+PT_List[1].split('.')[0]
-                        print(start_time)
+                        # print(start_time)
                         end_time= T_List[0].split('.')[0]+" "+T_List[1].split('.')[0]
 
                         #print(PT_List[6]+" : "+start_time+"----"+end_time)
                         duration=datetime.strptime(end_time,'%Y-%m-%d %H:%M:%S') - datetime.strptime(start_time,'%Y-%m-%d %H:%M:%S')
-                        print("DURATION: "+str(duration))
+                        # print("DURATION: "+str(duration))
                         if "stackApi" in file:
                             PT_List[8]= PT_List[8].split("]")[0]+"]"
                             TASKList = PT_List[0] + " " + PT_List[1] + ";" + T_List[0] + " " + T_List[
@@ -106,20 +109,20 @@ def taskCollector(file,NetEName,newFile,fileCount):
                         new_f.close()
                         
                         
-                    else:
-                        print( "It takes less than 10 sec :"+NetEName + "-" + PT_List[8])
+                    # else:
+                    #      print( "It takes less than 10 sec :"+NetEName + "-" + PT_List[8])
 
                 else:
                     line_no = +1
-                    print("Keeping first TASK.....")
-                    print("START: "+ str(T_List))
+                    # print("Keeping first TASK.....")
+                    # print("START: "+ str(T_List))
                     
 
 
 
                 PT_List = T_List
             elif line.__contains__("PLAY RECAP"):
-                print("End line : " +line)
+                # print("End line : " +line)
                 PT_List = T_List
                 
             
@@ -127,12 +130,11 @@ def taskCollector(file,NetEName,newFile,fileCount):
     f.close()
     
 
-def Gantt_plotter(textname,newDir):
+def Gantt_plotter(textname,newDir,duration_Threshold,path):
     task=[]
     start=[]
     endTime=[]
     durationList=[]
-    taskMission=[]
     taskAndDuration = []
     taskData=[]
     taskFilterNames =[]
@@ -173,37 +175,41 @@ def Gantt_plotter(textname,newDir):
                 taskData.append(mission+taskNameLine.group(0))
 
     file.close()
+
+    GeneralLog.getVariable(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,newDir,taskData,filePath,durationList,duration_Threshold,path)
+
+
+
+def runRafLogReader(path, duration_Threshold):
+    
+
+    duration_Threshold=float(duration_Threshold)
+    NEName=[]
    
-    figCreate(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,newDir,taskData,filePath,durationList,duration_Threshold)
-    #Creating CSV file format by used data from the log file.
-   
+    newDir=makeDirectory(path)
+    newFile=newDir+r"\TASKListLongerThan"+str(duration_Threshold)+"sec.txt"
+    #İf file is exist delete file
+    if(os.path.exists(newFile) and os.path.isfile(newFile)):
+        os.remove(newFile)
+    # print(newDir)
+    fileNames=logList(path)
+    fileFormatName=['commissioning','configure','main-migration-primary','main-migration-secondary','stackApi','vnfr-upgrade-mini','vnfr-mini-playbook','ansible_output']
+    # print(fileNames)
+    fileCount=0
 
-
-
-
-NEName=[]
-newDir=makeDirectory(path)
-newFile=newDir+r"\TASKListLongerThan"+str(duration_Threshold)+"sec.txt"
-#İf file is exist delete file
-if(os.path.exists(newFile) and os.path.isfile(newFile)):
-  os.remove(newFile)
-print(newDir)
-fileNames=logList(path)
-fileFormatName=['commissioning','configure','main-migration-primary','main-migration-secondary','stackApi','vnfr-upgrade-mini','vnfr-mini-playbook','ansible_output']
-print(fileNames)
-
-for i in fileNames:
-    if any(x in str(i) for x in fileFormatName):
-        file=path+"/"+str(i)
-        print(file)
-        NEName=str(i).split("-")
-        print(NEName)
-        taskCollector(file,NEName[0],newFile,fileCount)
-        fileCount +=1
-        readFirstTime(file)
-        
-    else:
-        print("Skipping for : "+str(i))
-
-Gantt_plotter(newFile,newDir)
+    for i in fileNames:
+        if any(x in str(i) for x in fileFormatName):
+            file=path+"/"+str(i)
+            # print(file)
+            NEName=str(i).split("-")
+            # print(NEName)
+            taskCollector(file,NEName[0],newFile,fileCount,duration_Threshold)
+            fileCount +=1
+            readFirstTime(file)
+            
+        else:
+            print("Skipping for : "+str(i))
+    
+    Gantt_plotter(newFile,newDir,duration_Threshold,path)
+    
 

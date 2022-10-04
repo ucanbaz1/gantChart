@@ -1,12 +1,9 @@
 """
-File Reader V3
+File Reader V3.1
 Created by Ersin YAYLA
 V3: Updated the time jump catching and time updating metods
-"""
-"""
-To Do  List:
-- Configure files all logs will be updated due to time gap found in commisioning logs
-- If there is no time gap, skip the updating 
+V3.1:
+- Configure logs timeline are being updated as per commisioning logs time update 
 """
 
 
@@ -18,6 +15,8 @@ import os
 from dateutil.parser import parse
 import ctypes, sys
 import re
+import shutil
+
 
 def is_admin():
     try:
@@ -25,6 +24,9 @@ def is_admin():
     except:
         return False
 def makeDirectory(path):
+    if os.path.exists(path + "\\UpdatedTimeLogs"):
+        shutil.rmtree(path + "\\UpdatedTimeLogs")
+    
     newPath = path + "\\" + "UpdatedTimeLogs"
     try:
         os.mkdir(newPath)
@@ -50,6 +52,12 @@ def is_date(string, fuzzy=True):
 
     except ValueError:
         return False
+
+def file_len(filename):
+    with open(filename) as f:
+        for i, _ in enumerate(f):
+            pass
+    return i+1
 
 def startEndDateExtractor(filePath,filename):
     file=filePath+"\\"+filename
@@ -81,15 +89,14 @@ def clockChecker(file):
         taskLineNumber=0
         targetLineNumber = 0
         listofLineNumbers=[]
-        
 
         for line in lines:
             if is_date(str(line.split(" ")[0])):
                 if "n=ansible | PLAY RECAP ***" in line:
                     print("We are at the end of file : " + file)
                     break
-                #elif "Run chronyd with tmp NTP conf file to set system clock" in line:
-                elif "Run chronyd with primary NTP IP" or "Run chronyd with tmp NTP conf file to set system clock" in line:
+                elif "Run chronyd with tmp NTP conf file to set system clock" in line:
+                #elif "Run chronyd with primary NTP IP" or "Run chronyd with tmp NTP conf file to set system clock" in line:
                     if "ERROR" in line:
                         continue
                     else:
@@ -139,7 +146,7 @@ def clockUpdater(file,listofNumbers,newFile):
                 continue
             newDate=""
             new_f = open(newFile, "a")
-            if is_date(str(line.split(" ")[0])):
+            if is_date(str(line.split(" ")[0])) and line.split(" ")[0].startswith("2022"):
                 old_time = str(line.split(" ")[0]) + " " + str(line.split(" ")[1]).replace(",", ".")
                 print("***************************************************************************************")
                 for i in range(len(listofNumbers)):
@@ -182,23 +189,48 @@ def clockUpdater(file,listofNumbers,newFile):
         f.close()
 
 
-filePath=input("Please enter a filename path: ")
-newDir=makeDirectory(filePath)
-fileNames=logList(filePath)
-fileFormatName=['commissioning','configure','main-migration-primary','main-migration-secondary','stackApi','Ansible_UW','vnfr-upgrade-mini','vnfr-mini-playbook','ansible_output']
-print(fileNames)
+def runFileReader(filePath,continerDateGap):  
+    continerDateGap=str(continerDateGap)
+    newDir=makeDirectory(filePath)
+    fileNames=logList(filePath)
+    # 'vnfr-upgrade-mini','vnfr-mini-playbook',
+    #fileFormatName=['commissioning','main-migration-primary','main-migration-secondary','stackApi']
+    fileFormatName=['commissioning','main-migration-primary','main-migration-secondary','stackApi','Ansible_UW','ansible_output']
+    print(fileNames)
+    
+    for i in fileNames:
 
-for i in fileNames:
-    if any(x in str(i) for x in fileFormatName):
-        file=filePath+"\\"+str(i)
-#        startEndDateExtractor(filePath,str(i))
-        print(file)
-        NEName=str(i).split("-")
-        print(NEName)
-        newFile=newDir+"\\"+str(i)
-        print(newFile)
-        list=clockChecker(file)
-        clockUpdater(file,list,newFile)
-    else:
-        print("Skipping for : "+str(i))
+        if any(x in str(i) for x in fileFormatName):
+            file=filePath+"\\"+str(i)
+    #        startEndDateExtractor(filePath,str(i))
+            print(file)
+            NEName=str(i).split("-")
+            print(NEName)
+            newFile=newDir+"\\"+str(i)
+            print(newFile)
+            if str(i).startswith("main") or str(i).startswith("stack"):
+                list=[]
+                with open(file, "r") as fp:
+                    size = len(fp.readlines())
+                    list.append(str(size-2)+";"+continerDateGap)
+                    fp.close()
+                print("It is stack or ansible file and list is : "+str(list))
+                clockUpdater(file, list, newFile)
+            else:
+                list=clockChecker(file)
+                clockUpdater(file,list,newFile)
+                configure_file=str(i).strip("commissioning.log")+"configure.log"
+                file=filePath+"\\"+configure_file
+                newFile = newDir + "\\" + configure_file
+                configure_line_count=file_len(file)
+                configure_list=[]
+                for t in list:
+                    configure_list.append(str(configure_line_count)+";"+t.split(";")[1])
+                print(configure_list)
+                clockUpdater(file, configure_list, newFile)
 
+        else:
+            if "configure" in str(i):
+                print("{} should have been handled already based on its commissioning log".format(str(i)))
+            else:
+                print("Skipping for {} since it is not in the list".format(str(i)))
