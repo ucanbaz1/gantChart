@@ -59,7 +59,6 @@ def nameBasedLogTaskReader(filename,Taskname,logname):
     return serverNEList
 
 def newConfigFileWriter(stageName,logFileName,startTask,endTask):
-    
     LogFileName.append(logFileName.split('\\')[-1])
     StageName.append(stageName)
     StageTaskStart.append(startTask)
@@ -104,7 +103,7 @@ def ConfigReader(filename,logPath):
                         VMStartTask = startTask.replace(prevServerName, i)
                         VMEndTask = endTask.replace(prevServerName, i.split(r"/")[-1].strip("config-"))
                         print(VMStageName)
-                        newConfigFileWriter(VMStageName, logFileName, VMStartTask, VMEndTask)
+                        newConfigFileWriter(VMStageName,logFileName,VMStartTask,VMEndTask)
 
                 elif "VM Upgrade" in stageName and not stageName.startswith("All"):
                     serverNeList=nameBasedLogTaskReader(logFileName, startTask,logFileName)
@@ -114,7 +113,7 @@ def ConfigReader(filename,logPath):
                         VMStartTask = startTask.replace(prevServerName, i)
                         VMEndTask = endTask.replace(prevServerName,i)
                         print(VMStageName)
-                        newConfigFileWriter(VMStageName,logFileName,VMStartTask,VMEndTask,logPath)
+                        newConfigFileWriter(VMStageName,logFileName,VMStartTask,VMEndTask)
 
                 elif stageName=="Commisioning and Configure logs":
                     fileNameList=logList(logPath)
@@ -135,12 +134,15 @@ def ConfigReader(filename,logPath):
 
 
 def getInputPath(fileFullPath):
-    logPath=fileFullPath.split("my")[0]
+    logPath=fileFullPath.split("myTrial")[0]
     print(logPath)
     try:
-        os.remove("Config.csv")
+        os.remove(logPath+"Config.csv")
     except OSError:
         pass
 
     ConfigReader(fileFullPath,logPath)
     createCSV(logPath)
+
+#fileFullPath= input("PLease insert Stage config file starting with \"my\":")
+#getInputPath(fileFullPath)
