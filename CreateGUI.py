@@ -25,7 +25,7 @@ class GanttChartGUI:
                     [sg.Exit(s=16, button_color="#bf6464"),sg.Button("Run", s=16, key="-run-")],
                     [sg.T("URL:"),sg.Text('GanttChart', justification="l", expand_x=True, font=('Courier New', 16, 'underline'), enable_events=True, key='-url-')],]
                 
-        window= sg.Window("GanttChart",layout,finalize=True,grab_anywhere=True, no_titlebar=True)
+        window= sg.Window("GanttChart",layout,finalize=True)
         
     
         while True:
