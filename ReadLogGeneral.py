@@ -7,6 +7,7 @@ from figureCreator import  figCreate
 import pandas as pd
 import csv
 from collections import defaultdict
+from figureCreator import colorList
 
 logGeneral =[]
 allFirstStartTime=[]
@@ -19,7 +20,7 @@ StageNameforGraph=[]
 StageTaskStart=[]
 StageTaskEnd=[]
 
-
+sameColor=[]
 
 class GeneralLog:
 
@@ -44,27 +45,54 @@ class GeneralLog:
         # print('StageTaskEnd:', StageTaskEnd)
 
     def readListtoCompareLog(filePath):
+        
         for j in range (len(LogFileName)):
+            k=1
             if LogFileName[j] in filePath:
                     with open(filePath) as f:
                         lines=f.readlines()
+                        
+                        start_line=""
+                        
                         for line in lines:
+                            
                             if StageTaskStart[j] in line and StageTaskStart[j]!="FILE_START":
-                                StageNameforGraph.append(StageName[j])
-                                allFirstStartTime.append(line[0:23])
+                                                               
+                                line = line.split(" ")[0]+" "+line.split(" ")[1]
+                                start_line=line
+           
                             elif StageTaskEnd[j] in line and StageTaskEnd[j] !="FILE_END":
-                                allLastEndTime.append(line[0:23])
+                                line = line.split(" ")[0]+" "+line.split(" ")[1]
+                                if LogFileName=="stackApiServer.log":
+                                    StageNameforGraph.append(StageName[j]+"-Trial "+str(k))
+                                    k +=1
+                                    sameColor.append(colorList[j])
+                                StageNameforGraph.append(StageName[j])
+                                sameColor.append(colorList[j])
+ 
+                                allLastEndTime.append(line)
+                                allFirstStartTime.append(start_line)
+
+
+                       
+                            elif StageTaskStart[j] in line and StageTaskEnd[j]=="FILE_END":
+                                logs.readLastTime(filePath)
+                                sameColor.append(colorList[j])
+                                break
+                            elif StageTaskEnd[j] !="FILE_END" and StageTaskEnd[j] in line:
+                                logs.readLastTime(filePath)
+                                sameColor.append(colorList[j])
+                                break
                             elif StageTaskStart[j]=="FILE_START" and StageTaskEnd[j]=="FILE_END":
                                 StageNameforGraph.append(StageName[j])
+                                sameColor.append(colorList[j])
                                 logs.readFirstTime(filePath)
                                 logs.readLastTime(filePath)
                                 break
-                            # elif StageTaskStart[j] in line and StageTaskEnd[j]=="FILE_END":
-                            #     logs.readLastTime(filePath)
-                            #     break
-                            # elif StageTaskEnd[j] !="FILE_END" and StageTaskEnd[j] in line:
-                            #     logs.readLastTime(filePath)
-                            #     break
+            
+        
+        print(sameColor)
+                            
                                 
                            
                                     
@@ -80,21 +108,36 @@ class GeneralLog:
         return fileNames
 
     def readFirstTime(fileF):
-        with open(fileF) as file:
+        print(fileF)
+        for line in list(open(fileF)):
             # if fileF.__contains__("commissioning.log"): #or fileF.__contains__("stackApiServer.log"):
                 # files.append(fileN)
-            content = file.read()
-            first_line = content.split('\n', 1)[0]
-            first_line=first_line[0:23]
-            allFirstStartTime.append(first_line)
-        file.close
+           
+            
+            # first_line = first_line.split(" ")[0]+" "+first_line.split(" ")[1]
+            # allFirstStartTime.append(first_line)
+            try:
+                
+                line = line.split(" ")[0]+" "+line.split(" ")[1]
+                datetime.strptime(line,'%Y-%m-%d %H:%M:%S.%f')
+                print(line)
+                allFirstStartTime.append(line)
+                break     
+            except:
+                    nullcontext
+      
     def readLastTime(fileF):
-       
+        print(fileF)
         # if fileF.__contains__("commissioning.log"):# or fileF.__contains__("stackApiServer.log"):
         for line in reversed(list(open(fileF))):
-            line = line[0:23]
+            
+            
             try:
+                
+                line = line.split(" ")[0]+" "+line.split(" ")[1]
+                
                 datetime.strptime(line,'%Y-%m-%d %H:%M:%S.%f')
+                print(line)
                 allLastEndTime.append(line)
                 break       
             except:
@@ -102,7 +145,7 @@ class GeneralLog:
        
     def getVariable(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,newDir,taskData,filePath,durationList,duration_Threshold,path):
         runRafLogReaderGeneral(path)
-        figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,allFirstStartTime,allLastEndTime,StageNameforGraph,newDir,taskData,filePath,durationList,duration_Threshold)
+        figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,allFirstStartTime,allLastEndTime,StageNameforGraph,newDir,taskData,filePath,durationList,duration_Threshold,sameColor)
         
 
 logs=GeneralLog

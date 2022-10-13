@@ -1,7 +1,7 @@
-import CreateGUI
+from CreateGUI import*
 
 
 class Main():
-    myGUI=CreateGUI.GanttChartGUI
-    myGUI.createGUI
+    myGUI=GanttChartGUI
+    myGUI.createGUI()
     

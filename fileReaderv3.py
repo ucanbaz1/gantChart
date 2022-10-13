@@ -122,6 +122,7 @@ def clockChecker(file):
                     targetLineNumber = 0
                     if (float(timeUpdate.split(":")[2]) > 1):
                         listofLineNumbers.append(str(taskLineNumber) + ";" + timeUpdate)
+                    
                     print(listofLineNumbers)
                 else:
                     pass
@@ -137,23 +138,32 @@ def clockUpdater(file,listofNumbers,newFile):
     print(listofNumbers)
     print(file)
     print(newFile)
-
+    lineTarget=listofNumbers[0].split(";")
+    print(lineTarget)
     with open(file,"r") as f:
         lines = f.readlines()
         lineNumber=0
+        count =1
         for line in lines:
             if re.search("^[a-zA-Z]", line) or line.startswith('}'):
                 continue
             newDate=""
+            
             new_f = open(newFile, "a")
             if is_date(str(line.split(" ")[0])) and line.split(" ")[0].startswith("2022"):
                 old_time = str(line.split(" ")[0]) + " " + str(line.split(" ")[1]).replace(",", ".")
                 print("***************************************************************************************")
                 for i in range(len(listofNumbers)):
-
+                    
+ 
+                    if line.__contains__("Run chronyd with tmp NTP conf file to set system clock") and int(lineTarget[0])-12< count < int(lineTarget[0])+12: 
+                        print("UFUK",count)
+                        lineTarget[0]=count
+                        # listofNumbers = count
+                       
                     print("iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
                     minus = False
-                    lineTarget=listofNumbers[i].split(";")
+                    
                     print(lineTarget)
                     if lineNumber<int(lineTarget[0])+2:
                         print("LINE : "+ str(lineNumber)+" : -> "+line)
@@ -177,6 +187,7 @@ def clockUpdater(file,listofNumbers,newFile):
                         old_time=str(new_time_date).rstrip("000")
                         if not old_time.__contains__("."):
                             old_time = old_time + ".000"
+                    
 
                 print("NEW : " + str(old_time))
                 new_f.write(old_time + " " + line)
@@ -184,7 +195,7 @@ def clockUpdater(file,listofNumbers,newFile):
                 new_f.write( line)
 
             new_f.close()
-
+            count += 1
             lineNumber +=1
         f.close()
 

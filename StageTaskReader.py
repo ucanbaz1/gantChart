@@ -1,18 +1,20 @@
 """
 Stage Task Reader
 Created by Ersin YAYLA
-Reads a csv file and update/create a stage config file accordingly 
+Reads a csv file and update/create a stage config file accordingly
+Updates:
+- Added an upgrade stage
+- Dublicate lines are excluded 
 """
 from contextlib import nullcontext
 import ctypes
 import os.path
 import pandas as pd
 
-LogFileName=[]
-StageName=[]
-StageTaskStart=[]
-StageTaskEnd=[]
-
+LogFileNameList = []
+StageNameList = []
+StageTaskStartList = []
+StageTaskEndList = []
 
 
 def is_admin():
@@ -21,8 +23,9 @@ def is_admin():
     except:
         return False
 
+# to collect all file names in the directory 
 def logList(path):
-    fileNames=[]
+    fileNames = []
     with os.scandir(path) as entries:
         for f in entries:
             if f.is_file():
@@ -31,20 +34,23 @@ def logList(path):
     print(fileNames)
     return fileNames
 
-def nameBasedLogTaskReader(filename,Taskname,logname):
+# We are picking up the all NE names in here  
+def nameBasedLogTaskReader(filename, Taskname, logname):
     serverNEList = []
     Taskname = Taskname.strip("<ServerName>")
     try:
-        with open(filename,"r") as f:
+        with open(filename, "r") as f:
             lines = f.readlines()
 
             for line in lines:
                 if Taskname in line:
-                    if "stackAPI" in logname:
+                    if "stack" in logname:
                         line = line.split('] ')[1]
                     else:
-                        line=line.split('] ')[0]
+                        line = line.split('] ')[0]
                     ServerNEName = line.split(" ")[-1]
+                    if "\n" in ServerNEName:
+                        ServerNEName = ServerNEName.strip("\n")
                     print(ServerNEName)
                     serverNEList.append(ServerNEName)
 
@@ -55,46 +61,58 @@ def nameBasedLogTaskReader(filename,Taskname,logname):
         nullcontext
     return serverNEList
 
-def newConfigFileWriter(stageName,logFileName,startTask,endTask):
-    
-    LogFileName.append(logFileName.split('\\')[-1])
-    StageName.append(stageName)
-    StageTaskStart.append(startTask)
-    StageTaskEnd.append(endTask)
-    
+# Keeping all data into the lists to write into a Config.csv file
+def newConfigFileWriter(stageName, logFileName, startTask, endTask):
+    isThere=False
+    for i in StageNameList: # Check if stageName is a dublicated data or not 
+        if stageName ==i:
+            print("{} ---->>>> is already there so skipping".format(i))
+            isThere=True
+            break
+    if not isThere:  #Put into the lists if it is not dublicated  
+        LogFileNameList.append(logFileName.split('/')[-1])
+        StageNameList.append(stageName)
+        StageTaskStartList.append(startTask)
+        StageTaskEndList.append(endTask)
+
     # with open(newFile, 'a') as file:
     #     file.write(stageName+";"+logFileName.split('\\')[-1]+";"+startTask+";"+endTask+"\n")
     #     file.close()
+
+# Creating Config.csv file
 def createCSV(logPath):
-    newFile=logPath+ r'Config.csv'
-    data = {'StageName': StageName, 'LogFileName': LogFileName, 'StageTaskStart': StageTaskStart, 'StageTaskEnd':StageTaskEnd}
+    newFile = logPath + r'Config.csv'
+    data = {'StageName': StageNameList, 'LogFileName': LogFileNameList, 'StageTaskStart': StageTaskStartList,
+            'StageTaskEnd': StageTaskEndList}
     df = pd.DataFrame(data)
     df.to_csv(newFile)
-def ConfigReader(filename,logPath):
-    with open(filename,"r") as file:
+
+# reads the my config file and process based on Stage names 
+def ConfigReader(filename, logPath):
+    with open(filename, "r") as file:
         lines = file.readlines()
         for line in lines:
             if line.startswith("#") or line.startswith("\n"):
                 pass
             else:
-                line=line.strip('\n')
+                line = line.strip('\n')
                 stageName = str(line.split(';')[0]).strip()
-                logFileName = logPath+str(line.split(';')[1]).strip()
+                logFileName = logPath + str(line.split(';')[1]).strip()
                 startTask = str(line.split(';')[2]).strip()
-                endTask=str(line.split(';')[3]).strip()
+                endTask = str(line.split(';')[3]).strip()
                 if "VM Remove" in stageName and not stageName.startswith("All"):
-                    serverNeList=nameBasedLogTaskReader(logFileName, startTask,logFileName)
+                    serverNeList = nameBasedLogTaskReader(logFileName, startTask, logFileName)
                     for i in serverNeList:
                         prevServerName = "<ServerName>"
                         VMStageName = stageName + " " + i
                         VMStartTask = startTask.replace(prevServerName, i)
-                        VMEndTask = endTask.replace(prevServerName,i)
+                        VMEndTask = endTask.replace(prevServerName, i)
                         print(VMStageName)
-                        newConfigFileWriter(VMStageName,logFileName,VMStartTask,VMEndTask)
-                            #file.write(stageName+" "+str(i)+";"+logFileName+";"+keyTask+" "+str(i)+";"+VMRemoveEnd+"\n")
+                        newConfigFileWriter(VMStageName, logFileName, VMStartTask, VMEndTask)
+                        # file.write(stageName+" "+str(i)+";"+logFileName+";"+keyTask+" "+str(i)+";"+VMRemoveEnd+"\n")
 
-                elif stageName=="VM Create":
-                    serverNeList = nameBasedLogTaskReader(logFileName, startTask,logFileName)
+                elif stageName == "VM Create":
+                    serverNeList = nameBasedLogTaskReader(logFileName, startTask, logFileName)
                     for i in serverNeList:
                         prevServerName = "<ServerName>"
                         VMStageName = stageName + " " + i.split(r"/")[-1].strip("config-")
@@ -102,8 +120,19 @@ def ConfigReader(filename,logPath):
                         VMEndTask = endTask.replace(prevServerName, i.split(r"/")[-1].strip("config-"))
                         print(VMStageName)
                         newConfigFileWriter(VMStageName, logFileName, VMStartTask, VMEndTask)
-                elif stageName=="Commisioning and Configure logs":
-                    fileNameList=logList(logPath)
+
+                elif "VM Upgrade" in stageName and not stageName.startswith("All"):
+                    serverNeList = nameBasedLogTaskReader(logFileName, startTask, logFileName)
+                    for i in serverNeList:
+                        prevServerName = "<ServerName>"
+                        VMStageName = stageName + " " + i
+                        VMStartTask = startTask.replace(prevServerName, i)
+                        VMEndTask = endTask.replace(prevServerName, i)
+                        print(VMStageName)
+                        newConfigFileWriter(VMStageName, logFileName, VMStartTask, VMEndTask)
+
+                elif stageName == "Commisioning and Configure logs":
+                    fileNameList = logList(logPath)
                     for f in fileNameList:
                         if "-commissioning" in f or "-configure" in f:
                             VMStageName = str(f).strip(".log")
@@ -116,17 +145,20 @@ def ConfigReader(filename,logPath):
 
 
                 else:
-                    newConfigFileWriter(stageName,logFileName,startTask,endTask)
+                    newConfigFileWriter(stageName, logFileName, startTask, endTask)
             file.close()
 
 
 def getInputPath(fileFullPath):
-    logPath=fileFullPath.split("my")[0]
+    logPath = fileFullPath.split("myTrial")[0]
     print(logPath)
     try:
-        os.remove("Config.csv")
+        os.remove(logPath + "Config.csv")
     except OSError:
         pass
 
-    ConfigReader(fileFullPath,logPath)
+    ConfigReader(fileFullPath, logPath)
     createCSV(logPath)
+
+#fileFullPath= input("PLease insert Stage config file starting with \"my\":")
+#getInputPath(fileFullPath)

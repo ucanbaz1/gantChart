@@ -22,12 +22,13 @@ colorList = ["yellow","red","blue","orange","green","gold","skyblue","gray","pin
            "lightseagreen","lime","magenta","maroon","mediumvioletred","olive",
             ]
 
-def figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,fig2_xstart,fig2_xend,fig2_y_axis,newDir,taskData,filePath,durationList,duration_Threshold):
+def figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,fig2_xstart,fig2_xend,fig2_y_axis,newDir,taskData,filePath,durationList,duration_Threshold,sameColor):
     
-    fig1 = createFigure(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,True)
-    fig3 = createFigure(fig2_xstart,fig2_xend,fig2_y_axis,fig2_y_axis,fig2_y_axis,fig2_xstart,False)
+      
+    fig1 = createFigure(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,colorList,True)
+    fig3 = createFigure(fig2_xstart,fig2_xend,fig2_y_axis,fig2_y_axis,fig2_y_axis,fig2_xstart,sameColor,False)
     fig2= createTableFig(fig1_xstart,fig1_xend,newDir,taskData,filePath,durationList)
-    
+
         #Get parameters for create hmtl page of gantt chart
     figures_to_html([fig3,fig1,fig2],"Task Overview","NOTE: This gantt chart shows tasks running over " +str(duration_Threshold)+" seconds!",newDir+r"\GanttChart_Task_Overview.html")
     
@@ -55,9 +56,9 @@ def createTableFig(start,endTime,newDir,taskData,filePath,durationList):
     return fig2
 
     #Create gantt chart figure.
-def createFigure(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,gantType):   
+def createFigure(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,color,gantType):   
        
-    fig=px.timeline(x_start=start,x_end=endTime,y=taskAndDuration,color=taskFilterNamesList,color_discrete_sequence=colorList)
+    fig=px.timeline(x_start=start,x_end=endTime,y=taskAndDuration,color=taskFilterNamesList,color_discrete_sequence=color)
 
     taskCount=0
     colorCount=0
