@@ -70,6 +70,7 @@ def newConfigFileWriter(stageName, logFileName, startTask, endTask):
             isThere=True
             break
     if not isThere:  #Put into the lists if it is not dublicated  
+
         LogFileNameList.append(logFileName.split('/')[-1])
         StageNameList.append(stageName)
         StageTaskStartList.append(startTask)

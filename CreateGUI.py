@@ -35,8 +35,10 @@ class GanttChartGUI:
                     [sg.Exit(s=16, button_color="#bf6464"),sg.Button("Run", s=16, key="-run-")],
                     [sg.T("URL:"),sg.Text('GanttChart', justification="l", expand_x=True, font=('Courier New', 16), enable_events=True, key='-url-')],]
                 
+
         window= sg.Window("GanttChart",layout,finalize=True, icon=r'icon.ico')
        
+
         
     
         while True:
