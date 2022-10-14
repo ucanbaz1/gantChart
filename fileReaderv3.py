@@ -7,6 +7,7 @@ V3.1:
 """
 
 
+from contextlib import nullcontext
 import plotly.express as px
 import plotly
 import pandas
@@ -58,6 +59,15 @@ def file_len(filename):
         for i, _ in enumerate(f):
             pass
     return i+1
+def lineSplit(line,file):
+    if file=="stackApiServer.log":
+     
+        line=line.split("T")[0]+" "+line.split("T")[1]
+        
+    else:
+       
+        line=line.split(" ")[0]+" "+line.split(" ")[1]
+    return line
 
 def startEndDateExtractor(filePath,filename):
     file=filePath+"\\"+filename
@@ -66,12 +76,12 @@ def startEndDateExtractor(filePath,filename):
     while True:
             with open(file, "r") as f:
                 firstDateCandidate=f.readline()
-                firstDate=firstDateCandidate.split(" ")[0]+" "+firstDateCandidate.split(" ")[1]
+                firstDate=lineSplit(firstDateCandidate,file)
                 lastDateCandidate=f.readlines()[i]
                 startsWithDateCheck = re.search(dateFormat, lastDateCandidate)
                 if startsWithDateCheck:
                     print(" There is date ")
-                    lastDate=lastDateCandidate.split(" ")[0]+" "+lastDateCandidate.split(" ")[1]
+                    lastDate=lineSplit(lastDateCandidate,file)
                     with open(filePath + "\\UpdatedTimeLogs\\mileStones.txt", "a") as mf:
                         mf.write(filename + ";" + firstDate + ";" + lastDate+"\n")
                         mf.close()
@@ -81,7 +91,7 @@ def startEndDateExtractor(filePath,filename):
                 f.close()
             i-=1
 
-def clockChecker(file):
+def clockChecker(file,fileName):
     fileStartEndDate=[]
     with open(file) as f:
         lines=f.readlines()
@@ -89,9 +99,15 @@ def clockChecker(file):
         taskLineNumber=0
         targetLineNumber = 0
         listofLineNumbers=[]
-
+        
         for line in lines:
-            if is_date(str(line.split(" ")[0])):
+            if f =="stackApiServe.log":
+                beforeZeroLine=str(line.split("T")[0])
+                dateType="%Y-%m-%d %H:%M:%S.%f"
+            else:
+                beforeZeroLine=str(line.split(" ")[0])
+                dateType="%Y-%m-%d %H:%M:%S,%f"
+            if is_date(beforeZeroLine):
                 if "n=ansible | PLAY RECAP ***" in line:
                     print("We are at the end of file : " + file)
                     break
@@ -102,20 +118,20 @@ def clockChecker(file):
                     else:
                         targetLineNumber = lineNumber + 3
                         taskLineNumber = lineNumber
-                        taskLineDate= str(line.split(" ")[0]+" "+line.split(" ")[1])
+                        taskLineDate= str(lineSplit(line,fileName))
                         print("TASK Line number is : "+str(lineNumber)+" -> Its date is : " +taskLineDate)
 
                 elif lineNumber == targetLineNumber:
                     #print("FOUND= " + line)
                     #print("line number is : " + str(lineNumber))
                     #timeUpdate = str(line.split(" ")[13]).strip("(").strip(")")
-                    updatedDateFromNTP=str(line.split(" ")[0]+" "+line.split(" ")[1])
+                    updatedDateFromNTP=str(lineSplit(line,fileName))
                     print("Time is {} but it should be {}. So updating accordingly !!!!! ".format(taskLineDate,updatedDateFromNTP))
-                    if datetime.strptime((updatedDateFromNTP), '%Y-%m-%d %H:%M:%S,%f') > datetime.strptime((taskLineDate), '%Y-%m-%d %H:%M:%S,%f'):
-                        timeUpdate=datetime.strptime((updatedDateFromNTP), '%Y-%m-%d %H:%M:%S,%f')-datetime.strptime((taskLineDate), '%Y-%m-%d %H:%M:%S,%f')
+                    if datetime.strptime((updatedDateFromNTP), dateType) > datetime.strptime((taskLineDate), dateType):
+                        timeUpdate=datetime.strptime((updatedDateFromNTP), dateType)-datetime.strptime((taskLineDate), dateType)
                         timeUpdate = str(timeUpdate).rstrip("000")
                     else:
-                        timeUpdate=datetime.strptime((taskLineDate), '%Y-%m-%d %H:%M:%S,%f')-datetime.strptime((updatedDateFromNTP), '%Y-%m-%d %H:%M:%S,%f')
+                        timeUpdate=datetime.strptime((taskLineDate), dateType)-datetime.strptime((updatedDateFromNTP), dateType)
                         timeUpdate = "-"+str(timeUpdate).rstrip("000")
                     timeUpdate=str(timeUpdate)
                     print("Time difference is : "+timeUpdate)
@@ -133,7 +149,7 @@ def clockChecker(file):
     return listofLineNumbers
 
 
-def clockUpdater(file,listofNumbers,newFile):
+def clockUpdater(file,listofNumbers,newFile,fileName):
     print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     print(listofNumbers)
     print(file)
@@ -144,14 +160,26 @@ def clockUpdater(file,listofNumbers,newFile):
         lines = f.readlines()
         lineNumber=0
         count =1
+        
         for line in lines:
             if re.search("^[a-zA-Z]", line) or line.startswith('}'):
                 continue
             newDate=""
-            
+            try:
+                if fileName =="stackApiServer.log":
+                    dateType="%Y-%m-%d %H:%M:%S.%f"
+                    lineDate=line.split("T")[0]
+                    lines=line.split("T")[0]+" "+line.split("T")[1]
+                    lines=lines.split(" ")[0]+" "+lines.split(" ")[1]
+                else:
+                    lineDate=line.split(" ")[0]
+                    dateType="%Y-%m-%d %H:%M:%S.%f"
+                    lines=line.split(" ")[0]+" "+line.split(" ")[1]
+            except:
+                nullcontext
             new_f = open(newFile, "a")
-            if is_date(str(line.split(" ")[0])) and line.split(" ")[0].startswith("2022"):
-                old_time = str(line.split(" ")[0]) + " " + str(line.split(" ")[1]).replace(",", ".")
+            if is_date(str(lineDate)) and lineDate.startswith("2022"):
+                old_time = str(lines).replace(",", ".")
                 print("***************************************************************************************")
                 for i in range(len(listofNumbers)):
                     
@@ -176,12 +204,12 @@ def clockUpdater(file,listofNumbers,newFile):
                         print(delta)
                         print("OLD : " + old_time)
                         if minus:
-                            new_time_date = datetime.strptime((old_time), '%Y-%m-%d %H:%M:%S.%f') - timedelta(
+                            new_time_date = datetime.strptime((old_time), dateType) - timedelta(
                                 hours=int(delta[0]), minutes=int(delta[1]), seconds=int(delta[2]),
                                 milliseconds=int(delta[3]))
 
                         else:
-                            new_time_date = datetime.strptime((old_time), '%Y-%m-%d %H:%M:%S.%f')+ timedelta(
+                            new_time_date = datetime.strptime((old_time), dateType)+ timedelta(
                                 hours=int(delta[0]), minutes=int(delta[1]), seconds=int(delta[2]),
                                 milliseconds=int(delta[3]))
                         old_time=str(new_time_date).rstrip("000")
@@ -226,10 +254,10 @@ def runFileReader(filePath,continerDateGap):
                     list.append(str(size-2)+";"+continerDateGap)
                     fp.close()
                 print("It is stack or ansible file and list is : "+str(list))
-                clockUpdater(file, list, newFile)
+                clockUpdater(file, list, newFile,str(i))
             else:
-                list=clockChecker(file)
-                clockUpdater(file,list,newFile)
+                list=clockChecker(file,str(i))
+                clockUpdater(file,list,newFile,str(i))
                 configure_file=str(i).strip("commissioning.log")+"configure.log"
                 file=filePath+"\\"+configure_file
                 newFile = newDir + "\\" + configure_file
@@ -238,7 +266,7 @@ def runFileReader(filePath,continerDateGap):
                 for t in list:
                     configure_list.append(str(configure_line_count)+";"+t.split(";")[1])
                 print(configure_list)
-                clockUpdater(file, configure_list, newFile)
+                clockUpdater(file, configure_list, newFile,str(i))
 
         else:
             if "configure" in str(i):
