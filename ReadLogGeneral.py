@@ -91,7 +91,7 @@ class GeneralLog:
                                 break
             
         
-        print(sameColor)
+        # print(sameColor)
                             
                                 
                            
@@ -108,7 +108,7 @@ class GeneralLog:
         return fileNames
 
     def readFirstTime(fileF):
-        print(fileF)
+        # print(fileF)
         for line in list(open(fileF)):
             # if fileF.__contains__("commissioning.log"): #or fileF.__contains__("stackApiServer.log"):
                 # files.append(fileN)
@@ -120,14 +120,14 @@ class GeneralLog:
                 
                 line = line.split(" ")[0]+" "+line.split(" ")[1]
                 datetime.strptime(line,'%Y-%m-%d %H:%M:%S.%f')
-                print(line)
+                # print(line)
                 allFirstStartTime.append(line)
                 break     
             except:
                     nullcontext
       
     def readLastTime(fileF):
-        print(fileF)
+        # print(fileF)
         # if fileF.__contains__("commissioning.log"):# or fileF.__contains__("stackApiServer.log"):
         for line in reversed(list(open(fileF))):
             
@@ -137,7 +137,7 @@ class GeneralLog:
                 line = line.split(" ")[0]+" "+line.split(" ")[1]
                 
                 datetime.strptime(line,'%Y-%m-%d %H:%M:%S.%f')
-                print(line)
+                # print(line)
                 allLastEndTime.append(line)
                 break       
             except:
