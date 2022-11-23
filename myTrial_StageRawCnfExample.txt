@@ -1,0 +1,18 @@
+#FORMAT:
+#Stage Name;file name;start task;end task
+#
+#
+#Use <ServerName> for variables
+# If you want to start from the beggining of a file (independent of taskname) please use FILE_START
+#If you want to use the timestamp of the end of a file (independent of taskname) please use FILE_END
+
+Oracle DB Backup and Transfer;main-migration-primary;Remove DB replication;Transfer DB backup from
+Primary Hosts Patching;main-migration-primary.log;MIGRATE:PRIMARY:UPGRADE:PLE4;	Print PLE 'upgraded to' version
+Secondary Hosts Patching;main-migration-secondary.log;MIGRATE:SECONDARY:UPGRADE:PLE4;Print PLE 'upgraded to' version
+Migrate Oracle;migration-primary;Run migrateOracle;Run migrateOracle
+Primary VM Remove;main-migration-primary.log;Get logical volume names of VM <ServerName>;Remove "<ServerName> on vCD"
+Secondary VM Remove;main-migration-secondary.log;Get logical volume names of VM <ServerName>;Remove "<ServerName> on vCD"
+All VM Create;stackAPI;Set VM list to create;Wait for system to become reachable
+VM Create;stackAPIServer.log;Create ISO from <ServerName>;Successfully started VM: <ServerName> on host
+QCOW transfer for all VM;stackAPIServer;Upload/copy qcow2 image to remote KVM hosts;Start VM instantiation
+Commisioning and Configure logs;logs;FILE_START;FILE_END
