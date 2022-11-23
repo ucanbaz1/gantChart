@@ -90,16 +90,19 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
 
                        
                         start_time= PT_List[0].split('.')[0]+" "+PT_List[1].split('.')[0]
-                        print(start_time)
+                        print("PTLIST1",PT_List)
+                        # print(start_time)
                         end_time= T_List[0].split('.')[0]+" "+T_List[1].split('.')[0]
 
                         #print(PT_List[6]+" : "+start_time+"----"+end_time)
                         duration=datetime.strptime(end_time,'%Y-%m-%d %H:%M:%S') - datetime.strptime(start_time,'%Y-%m-%d %H:%M:%S')
-                        print("DURATION: "+str(duration))
+                        # print("DURATION: "+str(duration))
                         if "stackApi" in file:
                             PT_List[8]= PT_List[8].split("]")[0]+"]"
+                            print("PT_List", PT_List)
                             TASKList = PT_List[0] + " " + PT_List[1] + ";" + T_List[0] + " " + T_List[
-                                1] + ";" + " Duration: " + str(duration) + ";" + "stackAPI-"+PT_List[5]+ "-" + PT_List[8]
+                                1] + ";" + " Duration: " + str(duration) + ";" + "stackAPI-"+ PT_List[8]
+                            print("TaslList",TASKList)
                         elif "ansible_output" in file:
                             PT_List[8] = PT_List[8].split("]")[0] + "]"
                             TASKList = PT_List[0] + " " + PT_List[1] + ";" + T_List[0] + " " + T_List[
@@ -115,7 +118,7 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
                         
                         
                     # else:
-                    #     #  print( "It takes less than 10 sec :"+NetEName + "-" + PT_List[8])
+                    #      print( "It takes less than 10 sec :"+NetEName + "-" + PT_List[8])
 
                 else:
                     line_no = +1
@@ -127,7 +130,7 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
 
                 PT_List = T_List
             elif line.__contains__("PLAY RECAP"):
-                print("End line : " +line)
+                # print("End line : " +line)
                 PT_List = T_List
                 
             
@@ -152,6 +155,7 @@ def Gantt_plotter(textname,newDir,duration_Threshold,path):
         graphLines=file.readlines()
         for i in graphLines:
             task.append(i.split(";")[3]+" -> "+i.split(";")[2])
+            # print("UFUK", task)
             start.append(i.split(";")[0])
             endTime.append(i.split(";")[1])
             
@@ -180,7 +184,7 @@ def Gantt_plotter(textname,newDir,duration_Threshold,path):
                 taskData.append(mission+taskNameLine.group(0))
 
     file.close()
-    
+
     GeneralLog.getVariable(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,newDir,taskData,filePath,durationList,duration_Threshold,path)
 
 
@@ -217,4 +221,3 @@ def runRafLogReader(path, duration_Threshold):
     
     Gantt_plotter(newFile,newDir,duration_Threshold,path)
     
-
