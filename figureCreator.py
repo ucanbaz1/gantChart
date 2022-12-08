@@ -19,31 +19,40 @@ colorList = ["yellow","red","blue","orange","green","gold","skyblue","gray","pin
             "darkgoldenrod","darkgrey","darkgreen","darkmagenta","tomato",
            "darkred","deepskyblue","forestgreen","fuchsia","slategrey","lavender",
             "lavenderblush","lawngreen","seashell","palegoldenrod","rosybrown",
-           "lightseagreen","lime","magenta","maroon","mediumvioletred","olive",
+           "lightseagreen","lime","magenta","maroon","mediumvioletred","olive","yellow","red","blue","orange","green","gold","skyblue","gray","pink","indigo","blueviolet","burlywood", "purple","aqua","aquamarine",
+            "seagreen","sienna","plum","royalblue","salmon","silver","lightgoldenrodyellow","darkslategray","darkolivegreen",
             ]
 
-def figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,fig2_xstart,fig2_xend,fig2_y_axis,newDir,taskData,filePath,durationList,duration_Threshold,sameColor):
+def figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,fig2_xstart,fig2_xend,fig2_y_axis,newDir,taskData,durationList,duration_Threshold,sameColor,DurationList):
     
       
     fig1 = createFigure(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,colorList,True)
+    fig2= createTableFig(fig1_xstart,fig1_xend,newDir,taskData,durationList,True)
     fig3 = createFigure(fig2_xstart,fig2_xend,fig2_y_axis,fig2_y_axis,fig2_y_axis,fig2_xstart,sameColor,False)
-    fig2= createTableFig(fig1_xstart,fig1_xend,newDir,taskData,filePath,durationList)
+    fig4=createTableFig(fig2_xstart,fig2_xend,newDir,fig2_y_axis,DurationList,False)
 
         #Get parameters for create hmtl page of gantt chart
-    figures_to_html([fig3,fig1,fig2],"Task Overview","NOTE: This gantt chart shows tasks running over " +str(duration_Threshold)+" seconds!",newDir+r"\GanttChart_Task_Overview.html")
+    figures_to_html([fig3,fig4,fig1,fig2],"Task Overview","NOTE: This gantt chart shows tasks running over " +str(duration_Threshold)+" seconds!",newDir+r"\GanttChart_Task_Overview.html")
     
-def createTableFig(start,endTime,newDir,taskData,filePath,durationList):
+def createTableFig(start,endTime,newDir,taskData,durationList,tableType):
+
+    if tableType==True:
+        pathName='\CSV.csv'
+    else:
+        pathName='\Stage.csv'
+    
+    filePath=newDir+pathName
     data = {'Task': taskData, 'Start': start, 'Finish': endTime, 'Duration':durationList}
-    if (os.path.exists(filePath) and os.path.isfile(filePath)):
-        os.remove(filePath)
+    # if (os.path.exists(filePath) and os.path.isfile(filePath)):
+    #     os.remove(filePath)
     df = pd.DataFrame(data)
     df.to_csv(filePath)
 
     # Creating a table in dash with CSV file
-    df = pd.read_csv(newDir+r'\CSV.csv', index_col=0)
-    df.sort_values(df.columns[3], 
-                    axis=0,
-                    inplace=True)
+    df = pd.read_csv(newDir+pathName, index_col=0)
+    # df.sort_values(df.columns[3], 
+    #                 axis=0,
+    #                 inplace=False)
     
     fig2 = go.Figure(data=[go.Table(
         header=dict(values=list(df.columns),

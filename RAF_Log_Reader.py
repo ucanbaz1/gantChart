@@ -21,6 +21,15 @@ import shutil
 
 allFirstStartTime=[]
 fileNames=[]
+task=[]
+start=[]
+endTime=[]
+durationList=[]
+taskAndDuration = []
+taskData=[]
+taskFilterNames =[]
+taskFilterName=[]
+taskFilterNamesList=[]
 
 def logList(path):
     with os.scandir(path) as entries:
@@ -47,6 +56,7 @@ def readFirstTime(fileF):
         content = file.read()
         first_line = content.split('\n', 1)[0]
         allFirstStartTime.append(first_line[0:23])
+        allFirstStartTime.reverse()
     # print(fileF)
        
 def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
@@ -65,7 +75,7 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
         for line in lines:
             startsWithDateCheck = re.search(dateFormat, line)
 
-            if  startsWithDateCheck and "TASK" in line:
+            if  startsWithDateCheck and " TASK " in line:
                 """print(PT_List)"""
                 line=line.replace("*","").strip(" \n")
                 line = line.replace(",", ".")
@@ -85,7 +95,7 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
 
                        
                         start_time= PT_List[0].split('.')[0]+" "+PT_List[1].split('.')[0]
-                        print("PTLIST1",PT_List)
+                        
                         # print(start_time)
                         end_time= T_List[0].split('.')[0]+" "+T_List[1].split('.')[0]
 
@@ -97,7 +107,7 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
                             print("PT_List", PT_List)
                             TASKList = PT_List[0] + " " + PT_List[1] + ";" + T_List[0] + " " + T_List[
                                 1] + ";" + " Duration: " + str(duration) + ";" + "stackAPI-"+ PT_List[8]
-                            print("TaslList",TASKList)
+                            
                         elif "ansible_output" in file:
                             PT_List[8] = PT_List[8].split("]")[0] + "]"
                             TASKList = PT_List[0] + " " + PT_List[1] + ";" + T_List[0] + " " + T_List[
@@ -117,15 +127,15 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
 
                 else:
                     line_no = +1
-                    # print("Keeping first TASK.....")
-                    # print("START: "+ str(T_List))
+                    print("Keeping first TASK.....")
+                    print("START: "+ str(T_List))
                     
 
 
 
                 PT_List = T_List
             elif line.__contains__("PLAY RECAP"):
-                # print("End line : " +line)
+                print("End line : " +line)
                 PT_List = T_List
                 
             
@@ -134,18 +144,10 @@ def taskCollector(file,NetEName,newFile,fileCount,duration_Threshold):
     
 
 def Gantt_plotter(textname,newDir,duration_Threshold,path):
-    task=[]
-    start=[]
-    endTime=[]
-    durationList=[]
-    taskAndDuration = []
-    taskData=[]
-    taskFilterNames =[]
-    taskFilterName=[]
-    taskFilterNamesList=[]
+
 
     
-    filePath = newDir + r'\CSV.csv'
+    # filePath = newDir + r'\CSV.csv'
     with open(textname,'r') as file:
         graphLines=file.readlines()
         for i in graphLines:
@@ -177,11 +179,29 @@ def Gantt_plotter(textname,newDir,duration_Threshold,path):
                 durationList.append(durationGroup)
                 taskAndDuration.append(mission+taskNameLine.group(0)+taskDuration.group(0))
                 taskData.append(mission+taskNameLine.group(0))
+                
+
+    
+                
 
     file.close()
 
-    GeneralLog.getVariable(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,newDir,taskData,filePath,durationList,duration_Threshold,path)
 
+    sortGant()
+    GeneralLog.getVariable(start,endTime,taskAndDuration,taskFilterNamesList,fileNames,allFirstStartTime,newDir,taskData,durationList,duration_Threshold,path)
+
+def sortGant():
+    j=0
+    for i in range(len(start)):
+        while j < len(start):
+            if datetime.strptime(start[i],'%Y-%m-%d %H:%M:%S.%f')>=datetime.strptime(start[j],'%Y-%m-%d %H:%M:%S.%f'):
+                taskAndDuration.insert(i, taskAndDuration.pop(j))
+                start.insert(i, start.pop(j))
+                endTime.insert(i, endTime.pop(j))
+                taskFilterNamesList.insert(i,taskFilterNamesList.pop(j))
+                
+            j = j+1
+        j = i+1
 
 
 def runRafLogReader(path, duration_Threshold):
@@ -197,7 +217,7 @@ def runRafLogReader(path, duration_Threshold):
         os.remove(newFile)
     # print(newDir)
     fileNames=logList(path)
-    fileFormatName=['commissioning','configure','main-migration-primary','main-migration-secondary','stackApi','vnfr-upgrade-mini','vnfr-mini-playbook','ansible_output']
+    fileFormatName=['commissioning','configure','main-migration-primary','main-migration-secondary','stackApi','vnfr','ansible_output']
     # print(fileNames)
     fileCount=0
 

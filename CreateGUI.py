@@ -27,7 +27,7 @@ class GanttChartGUI:
                     [sg.Checkbox("",default=True, key="-3-"),sg.T("LogReader:", s=10, justification="r"), sg.I(key="-Log-"), sg.FolderBrowse()],
                     [sg.T(' ', s=36, justification="r")],
                     [sg.T('Show process duration > (in sec):', s=36, justification="r"), sg.I(key="-Time-",size=(21))],
-                    [sg.T('Time difference between Container and Lab NTPs:', s=36, justification="r"), sg.I(key="-TD-",size=(21))],
+                    [sg.T('Time difference between Container and Lab NTPs:', s=36,  justification="r"), sg.I(key="-TD-",default_text='00:00:00.000',size=(21))],
                     [sg.T(' ', s=36, justification="r")],
                     [sg.T("Console Output", justification="left", expand_x=True, font=('Courier New', 10), enable_events=True)],
                     # [sg.Output(size=(80,15))],
@@ -42,46 +42,49 @@ class GanttChartGUI:
         
     
         while True:
-                event, values = window.read()
+                event, values = window.read(timeout=500)
                 
    
                 if event in (sg.WINDOW_CLOSED,"Exit"):
                     break
                 if event in  ("-run-"):                                   
-                    
-                    if values["-Config-"] !="":
-                                getInputPath(values["-Config-"])
-
-                    else:
-                        if values["-File-"] =="" and values["-Log-"]=="" or values["-Log-"]!="" and values["-Time-"]=="" :
-                            sg.popup("Logs Path or Time Undefined!")
-                        elif values["-File-"] != "" and values["-Time-"] !="" and values["-Log-"]=="":
-                            sg.popup("You Dont Need Time For FileReader!")
+                    gui.runCommand(cmd=values['-Log-'], window=window)
+                    if window[event].get_text() != "Running":
+                        window["-run-"].update(text="Running")  
+                        sg.popup("Click Ok to Run")
                         
-                        else:
-                            
-                            if window[event].get_text() != "Running":
-                                window["-run-"].update(text="Running")  
-                                sg.popup("Click Ok to Run")
-                            
-                                if values["-File-"] != "" and values["-Log-"] =="" and values["-2-"] ==True:
-                                        runFileReader(values["-File-"],values["-TD-"])
-                                        if values["-1-"] ==True:
-                                            getInputPath(values["-Config-"])
-                                        # gui.runCommand(cmd=values['-Log-'], window=window)
-                                elif values["-Log-"] !="" and values["-Time-"] !="" and values["-File-"] == "" and values["-3-"] ==True:
-                                    runRafLogReader(values["-Log-"], values["-Time-"])
-                                    # gui.runCommand(cmd=values['-Log-'], window=window)
-                                    if values["-1-"] ==True:
-                                        getInputPath(values["-Config-"])
-                                elif values["-File-"] !="" and values["-Log-"]!="" and values["-Time-"] !="" and values["-2-"] ==True and values["-3-"] ==True: 
-                                    runFileReader(values["-File-"],values["-TD-"])
-                                    runRafLogReader(values["-Log-"],values["-Time-"])
-                                    # gui.runCommand(cmd=values['-Log-'], window=window)
-                                    
-                                    
-                                window["-run-"].update(text="Run") 
+                        if window[event].get_text() != "Running":
+                            window["-run-"].update(text="Running")  
+                            sg.popup("Click Ok to Run")
+                        if values["-1-"] ==True:
+                            if values["-Config-"] =="":
+                                sg.popup("Config Path Undefined!")
+                            else:
+                                getInputPath(values["-Config-"])
                                 sg.popup("Done!")
+
+                        elif values["-2-"] ==True:
+                            if values["-File-"] == "" :
+                                sg.popup("File Reader Path Undefined!")
+                            else:
+                                runFileReader(values["-File-"],values["-TD-"])
+                                sg.popup("Done!")
+                        
+                        elif values["-3-"] ==True:
+                            if values["-Log-"]=="" or values["-Time-"]=="" :
+                                sg.popup("Logs Path or Time Undefined!")
+                            else:
+                                runRafLogReader(values["-Log-"], values["-Time-"])
+                                sg.popup("Done!")
+
+                        elif values["-2-"] ==True and values["-3-"] ==True:
+                            if values["-File-"] != "" and values["-Time-"] !="" and values["-Log-"]!="":
+                                runFileReader(values["-File-"],values["-TD-"])
+                                runRafLogReader(values["-Log-"],values["-Time-"])
+                                sg.popup("Done!")
+
+                        window["-run-"].update(text="Run") 
+                        
                             
                         url=values["-Log-"]+"\\GanntFiles\\GanttChart_Task_Overview.html"
                         window["-url-"].update(font=('Courier New', 16, 'underline'),text_color='blue')
@@ -90,6 +93,7 @@ class GanttChartGUI:
                             webbrowser.open(url)
                         except:
                             nullcontext                    
+                
         window.close()
     def runCommand(cmd, timeout=None, window=None):
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -100,7 +104,8 @@ class GanttChartGUI:
             print(line)
             window.Refresh() if window else None        # yes, a 1-line if, so shoot me
         retval = p.wait(timeout)
-        return (retval, output)                         # also return the output just for fun
+        return (retval, output)      
+
 
     # if __name__ == '__main__':
     #     createGUI()
