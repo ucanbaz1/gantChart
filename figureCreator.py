@@ -10,7 +10,7 @@ import os
 
 
 
-
+withDuration=[]
 
 colorList = ["yellow","red","blue","orange","green","gold","skyblue","gray","pink","indigo","blueviolet","burlywood", "purple","aqua","aquamarine",
             "seagreen","sienna","plum","royalblue","salmon","silver","lightgoldenrodyellow","darkslategray","darkolivegreen",
@@ -25,6 +25,8 @@ colorList = ["yellow","red","blue","orange","green","gold","skyblue","gray","pin
 
 def figCreate(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,fig2_xstart,fig2_xend,fig2_y_axis,newDir,taskData,durationList,duration_Threshold,sameColor,DurationList):
     
+    # for i in range(len(fig2_y_axis)):
+        # withDuration.append(fig2_y_axis[i]+" "+DurationList[i])
       
     fig1 = createFigure(fig1_xstart,fig1_xend,fig1_y_axis,fig1_filter,fig1_vertical_line,fig1_allFirstStartTime,colorList,True)
     fig2= createTableFig(fig1_xstart,fig1_xend,newDir,taskData,durationList,True)

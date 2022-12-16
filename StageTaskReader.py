@@ -63,6 +63,10 @@ def nameBasedLogTaskReader(filename, Taskname, logname, stageName):
                 
                 elif "VM Creation" in stageName and Taskname in line :
                     ServerNEName = (line.split("disk")[1]).split(".")[0]
+                
+                # elif ("Config Drive" in stageName or "Create cloud-init ISO" in stageName)  and Taskname in line :
+                #     ServerNEName = (line.split(".yml ")[1]).split("\n")[0]
+                
                     
                 else:
                     if Taskname in line:
@@ -128,7 +132,7 @@ def ConfigReader(filename, logPath):
                 logFileName = logPath + str(line.split(';')[1]).strip()
                 startTask = str(line.split(';')[2]).strip()
                 endTask = str(line.split(';')[3]).strip()
-                if "VM Remove" in stageName and not stageName.startswith("All")  or (stageName=="VM Disk Replacement"):
+                if "VM Remove" in stageName and not stageName.startswith("All")  or (stageName=="VM Disk Replacement") or (stageName=="Config Drive") or (stageName=="Create cloud-init ISO"):
                     serverNeList= nameBasedLogTaskReader(logFileName, startTask, logFileName,stageName)
                     for i in serverNeList:
                         prevServerName = "<ServerName>"

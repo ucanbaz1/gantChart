@@ -152,6 +152,7 @@ def clockUpdater(file,listofNumbers,newFile):
         lines = f.readlines()
         lineNumber=0
         count =1
+        beforeString="" 
         for line in lines:
             lineDate=line[0:23]
             try:
@@ -160,7 +161,7 @@ def clockUpdater(file,listofNumbers,newFile):
             except:
                 splitItem=" "
 
-            if re.search("^[a-zA-Z]", line) or line.startswith('}'):
+            if re.search("^[a-zA-Z]", line) and line[0]!="P" or line.startswith('}'):
                 continue
             newDate=""
             
@@ -170,17 +171,23 @@ def clockUpdater(file,listofNumbers,newFile):
                 old_time = old_time.split(" ")[0] + " " + old_time.split(" ")[1]
                 # print("***************************************************************************************")
                 for i in range(len(listofNumbers)):
-                    
+                      
  
                     if line.__contains__("Run chronyd with tmp NTP conf file to set system clock") and int(lineTarget[0])-12< count < int(lineTarget[0])+12: 
-                        lineTarget[0]=count
-                        # listofNumbers = count
+                        # lineTarget[0]=count
+                        beforeString="found"
+                        
+                    if "found" in beforeString and line.__contains__("changed:") and count < int(lineTarget[0])+5:
+                        lineTarget[0]=count-1
+                        beforeString=""
+
+                        
                        
                     # print("iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
                     minus = False
                     
                     # print(lineTarget)
-                    if lineNumber<int(lineTarget[0])+2:
+                    if lineNumber<int(lineTarget[0]):
                         # print("LINE : "+ str(lineNumber)+" : -> "+line)
                         timeUpdate=lineTarget[1]
                         if timeUpdate.__contains__("-"):

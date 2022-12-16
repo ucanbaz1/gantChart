@@ -63,6 +63,31 @@ class GeneralLog:
                                 line = line.split(" ")[0]+" "+line.split(" ")[1]
                                 start_line=line
            
+                            # elif StageTaskEnd[j] in line and "PLAY RECAP" in line and start_line !="":
+                               
+                            #         line = (line.split("To:")[1]).split(")")[0]
+                            #         line2=line.split("T")[0]+" "+line.split("T")[1]
+                            #         end_line.append(line2)
+                            #         if end_line!="" and len(end_line)<2 :
+                            #             StageNameforGraph.append(StageName[j])
+                            #             sameColor.append(colorList[j])
+
+                            #             allLastEndTime.append(line2)
+                            #             allFirstStartTime.append(start_line)
+
+                            # elif StageTaskEnd[j] in line and "endTime" in line and start_line !="":
+                            #             line = ((((line.split(": ")[1]).split(",")[0]).split('"')[1]).split('"')[0])
+                            #             line2=line.split("T")[0]+" "+line.split("T")[1]
+                            #             end_line.append(line2)
+                            #             if end_line!="" and len(end_line)<2 :
+                            #                 StageNameforGraph.append(StageName[j])
+                            #                 sameColor.append(colorList[j])
+
+                            #                 allLastEndTime.append(line2)
+                            #                 allFirstStartTime.append(start_line)
+
+                                        
+                            
                             elif StageTaskEnd[j] in line and start_line !="":
                                 end_line.append(line.split(" ")[0]+" "+line.split(" ")[1])
                                 line = line.split(" ")[0]+" "+line.split(" ")[1]
@@ -70,7 +95,7 @@ class GeneralLog:
                                 #     StageNameforGraph.append(StageName[j]+"-Trial "+str(k))
                                 #     k +=1
                                 #     sameColor.append(colorList[j])
-
+                                
                                 if "vnfr" in LogFileName[j]:
 
                                     if end_line!="" and len(end_line)<2 :
